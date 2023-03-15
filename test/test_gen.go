@@ -1,5 +1,7 @@
 package test
 
+// INTER(Name)
+// @PATH:
 type name struct {
 }
 
@@ -23,4 +25,29 @@ func (name) E() func(string) string {
 	return func(s string) string {
 		return s
 	}
+}
+
+// INTER(Namae)
+// @PATH:
+type namae struct {
+}
+
+func (namae) A() {
+
+}
+
+func (namae) B(i int) int {
+	return 0
+}
+
+func (namae) C(s string) string {
+	return ""
+}
+
+func (namae) D(i int, s string) string {
+	return ""
+}
+
+func (namae) E(fn func(string) string) (f func(string) string) {
+	return fn
 }

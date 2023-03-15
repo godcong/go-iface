@@ -40,20 +40,23 @@ func (g *Generator) parsePath(fileName string) (map[string]*ast.Package, error) 
 }
 
 func (g *Generator) Generate(f map[string]*ast.Package) ([]byte, error) {
-	var v InterfaceVisitor
-
+	v := NewVisitor()
+	v.withName = true
 	for name, pkg := range f {
 		fmt.Println("name:", name, ", package", pkg.Name)
 		for fname, file := range pkg.Files {
 			fmt.Println("filename:", fname)
-			ast.Walk(&v, file)
+			ast.Walk(v, file)
 		}
 	}
-	for _, info := range v.Methods {
-		fmt.Printf("Function name: %s\n", info.Name)
-		fmt.Printf("Arguments: %s\n", info.Args)
-		fmt.Printf("Return types: %s\n", info.Ret)
-		fmt.Println()
+	for name, s := range v.Structs {
+		fmt.Printf("Struct type [%s] has\n", name)
+		for _, info := range s {
+			fmt.Printf("Function name: %s\n", info.Name)
+			fmt.Printf("Arguments: %s\n", info.Params)
+			fmt.Printf("Return types: %s\n", info.RetTypes)
+			fmt.Println()
+		}
 	}
 	return nil, nil
 }
