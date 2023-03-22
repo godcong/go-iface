@@ -25,3 +25,11 @@ func (name) J(m FuncMethod) (f func(int) string, e error) {
 		return ""
 	}, nil
 }
+
+func (name) K(m FuncMethod) (s struct{ r string }, e error) {
+	return struct{ r string }{r: ""}, nil
+}
+
+func (name) L(m, n, o, p FuncMethod) (s struct{ r string }, e error) {
+	return struct{ r string }{r: ""}, nil
+}

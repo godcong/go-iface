@@ -3,98 +3,87 @@ package generator
 import (
 	"fmt"
 	"go/ast"
-	"strings"
+
+	"github.com/godcong/go-inter/generator/code"
 )
 
 type Visitor struct {
-	withName bool
-	Structs  map[string][]Interface
+	withName   bool
+	Interfaces map[string]*code.Struct
 }
 
 func (v *Visitor) Visit(node ast.Node) ast.Visitor {
 	switch n := node.(type) {
 	case *ast.FuncDecl:
-		funcInfo := Interface{
-			Name: n.Name.Name,
-		}
 		var s string
 		if n.Recv != nil {
 			for _, arg := range n.Recv.List {
 				s = fmt.Sprintf("%s", arg.Type)
 			}
 		}
+		//skip empty receiver
 		if s == "" {
 			return v
 		}
-
+		inter := &code.Struct{Name: s}
+		if i, ok := v.Interfaces[s]; ok {
+			inter = i
+		}
+		m := code.Method{
+			Name: n.Name.Name,
+		}
+		fmt.Printf("struct(%s) func %s()\n", s, m.Name)
 		if n.Type.Params != nil {
-			for _, arg := range n.Type.Params.List {
-				argName := v.getName(arg.Names)
-				if ft, ok := arg.Type.(*ast.FuncType); ok {
-					if argName != "" {
-						argType := fmt.Sprintf("%s func(%s) %s", argName, formatFieldList(ft.Params), formatFieldList(ft.Results))
-						funcInfo.Params = append(funcInfo.Params, argType)
-					} else {
-						argType := fmt.Sprintf("func(%s) %s", formatFieldList(ft.Params), formatFieldList(ft.Results))
-						funcInfo.Params = append(funcInfo.Params, argType)
-					}
-				} else {
-					argType := fmt.Sprintf("%s", arg.Type)
-					if argName != "" {
-						funcInfo.Params = append(funcInfo.Params, fmt.Sprintf("%s %s", argName, argType))
-					} else {
-						funcInfo.Params = append(funcInfo.Params, fmt.Sprintf("%s", argType))
-					}
-
-				}
+			for _, field := range n.Type.Params.List {
+				var arg code.Argument
+				arg.Name = getIdentName(field.Names)
+				arg.Type = code.ParseType(field.Type)
+				arg.Params = arg.Type.Params()
+				arg.Rets = arg.Type.Rets()
+				//if ft, ok := field.Type.(*ast.FuncType); ok {
+				//	arg.Params = parseArgsFromFieldList(ft.Params)
+				//	arg.Rets = parseArgsFromFieldList(ft.Results)
+				//}
+				fmt.Sprintf("Arg(%s)\n", arg.Type)
+				m.Params = append(m.Params, arg)
 			}
 		}
 		if n.Type.Results != nil {
-			for _, ret := range n.Type.Results.List {
-				retName := v.getName(ret.Names)
-				if ft, ok := ret.Type.(*ast.FuncType); ok {
-					if retName != "" {
-						retType := fmt.Sprintf("%s func(%s) %s", retName, formatFieldList(ft.Params), formatFieldList(ft.Results))
-						funcInfo.RetTypes = append(funcInfo.RetTypes, retType)
-					} else {
-						retType := fmt.Sprintf("func(%s) %s", formatFieldList(ft.Params), formatFieldList(ft.Results))
-						funcInfo.RetTypes = append(funcInfo.RetTypes, retType)
-					}
-				} else {
-					retType := fmt.Sprintf("%s", ret.Type)
-					if retName != "" {
-						funcInfo.RetTypes = append(funcInfo.RetTypes, fmt.Sprintf("%s %s", retName, retType))
-					} else {
-						funcInfo.RetTypes = append(funcInfo.RetTypes, fmt.Sprintf("%s", retType))
-					}
-
-				}
+			for _, field := range n.Type.Results.List {
+				var arg code.Argument
+				arg.Name = getIdentName(field.Names)
+				arg.Type = code.ParseType(field.Type)
+				arg.Params = arg.Type.Params()
+				arg.Rets = arg.Type.Rets()
+				//if ft, ok := field.Type.(*ast.FuncType); ok {
+				//	arg.Params = parseArgsFromFieldList(ft.Params)
+				//	arg.Rets = parseArgsFromFieldList(ft.Results)
+				//}
+				fmt.Printf("Ret(%s)\n", arg.Type)
+				m.Rets = append(m.Rets, arg)
 			}
 		}
-		v.Structs[s] = append(v.Structs[s], funcInfo)
+		//if method, ok := inter.Methods[m.name]; ok {
+		//	fmt.Println("method", method.name, "is already exist")
+		//}
+		//if inter.Methods == nil {
+		//	inter.Methods = make(map[string]Method)
+		//}
+		inter.Methods = append(inter.Methods, m)
+		v.Interfaces[s] = inter
 	}
 	return v
 }
 
-func (v *Visitor) getName(names []*ast.Ident) string {
-	if v.withName {
-		for _, name := range names {
-			return name.Name
-		}
+func getIdentName(names []*ast.Ident) string {
+	for _, name := range names {
+		return name.Name
 	}
 	return ""
 }
 
-func formatFieldList(fl *ast.FieldList) string {
-	var fields []string
-	for _, field := range fl.List {
-		fields = append(fields, fmt.Sprintf("%s", field.Type))
-	}
-	return strings.Join(fields, ", ")
-}
-
 func NewVisitor() *Visitor {
 	return &Visitor{
-		Structs: make(map[string][]Interface),
+		Interfaces: make(map[string]*code.Struct),
 	}
 }

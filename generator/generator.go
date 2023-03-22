@@ -49,14 +49,20 @@ func (g *Generator) Generate(f map[string]*ast.Package) ([]byte, error) {
 			ast.Walk(v, file)
 		}
 	}
-	for name, s := range v.Structs {
-		fmt.Printf("Struct type [%s] has\n", name)
-		for _, info := range s {
-			fmt.Printf("Function name: %s\n", info.Name)
-			fmt.Printf("Arguments: %s\n", info.Params)
-			fmt.Printf("Return types: %s\n", info.RetTypes)
-			fmt.Println()
+	for _, m := range v.Interfaces {
+		fmt.Printf("Struct type [%s] has\n", m.Name)
+
+		for _, param := range m.Methods {
+			fmt.Printf("Function name: %s\n", param.Name)
+			for _, argument := range param.Params {
+				fmt.Printf("Arguments: %s\n", argument.String())
+			}
+			for _, argument := range param.Rets {
+				fmt.Printf("Return types: %s\n", argument.String())
+			}
+
 		}
+		fmt.Println()
 	}
 	return nil, nil
 }

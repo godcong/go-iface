@@ -1,6 +1,6 @@
 package test
 
-// INTER(Name)
+// INTER(name)
 // @PATH:
 type name struct {
 }
@@ -28,7 +28,7 @@ func (name) E() func(string) string {
 }
 
 // INTER(Namae)
-// @PATH:
+// @PATH[]
 type namae struct {
 }
 
