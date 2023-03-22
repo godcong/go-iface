@@ -1,9 +1,11 @@
-package code
+package generator
 
 import (
 	"fmt"
 	"go/ast"
 	"strings"
+
+	"github.com/godcong/go-inter/generator/code"
 )
 
 const (
@@ -18,7 +20,6 @@ const (
 
 type Type struct {
 	source          ast.Expr
-	names           []string
 	inType          string
 	inTypeFormat    string
 	inTypeParamList *ast.FieldList
@@ -33,19 +34,18 @@ func (t Type) String() string {
 	return t.inType
 }
 
-func (t Type) Params() []Argument {
-	return parseArgsFromFieldList(t.inTypeParamList)
+func (t Type) Params() []code.Argument {
+	return code.parseArgsFromFieldList(t.inTypeParamList)
 
 }
 
-func (t Type) Rets() []Argument {
-	return parseArgsFromFieldList(t.inTypeRetList)
+func (t Type) Rets() []code.Argument {
+	return code.parseArgsFromFieldList(t.inTypeRetList)
 }
 
 func ParseType(names []*ast.Ident, expr ast.Expr) Type {
 	t := Type{
 		source:       expr,
-		names:        getIdentNames(names),
 		inType:       "default",
 		inTypeFormat: fmt.Sprintf("%s", expr),
 		inTypeFunc:   parseDefaultTypeString,

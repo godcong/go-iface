@@ -53,11 +53,11 @@ func (g *Generator) Generate(f map[string]*ast.Package) ([]byte, error) {
 		fmt.Printf("Struct type [%s] has\n", m.Name)
 
 		for _, param := range m.Methods {
-			fmt.Printf("Function name: %s\n", param.Name)
-			for _, argument := range param.Params {
+			fmt.Printf("Function name: %s\n", param.name)
+			for _, argument := range param.params {
 				fmt.Printf("Arguments: %s\n", argument.String())
 			}
-			for _, argument := range param.Rets {
+			for _, argument := range param.rets {
 				fmt.Printf("Return types: %s\n", argument.String())
 			}
 

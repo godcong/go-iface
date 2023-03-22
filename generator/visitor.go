@@ -30,37 +30,37 @@ func (v *Visitor) Visit(node ast.Node) ast.Visitor {
 			inter = i
 		}
 		m := code.Method{
-			Name: n.Name.Name,
+			name: n.Name.Name,
 		}
-		fmt.Printf("struct(%s) func %s()\n", s, m.Name)
+		fmt.Printf("struct(%s) func %s()\n", s, m.name)
 		if n.Type.Params != nil {
 			for _, field := range n.Type.Params.List {
 				var arg code.Argument
-				arg.Name = getIdentName(field.Names)
-				arg.Type = code.ParseType(field.Type)
+				arg.Names = getIdentName(field.Names)
+				arg.Type = ParseType(nil, field.Type)
 				arg.Params = arg.Type.Params()
 				arg.Rets = arg.Type.Rets()
 				//if ft, ok := field.Type.(*ast.FuncType); ok {
-				//	arg.Params = parseArgsFromFieldList(ft.Params)
-				//	arg.Rets = parseArgsFromFieldList(ft.Results)
+				//	arg.params = parseArgsFromFieldList(ft.params)
+				//	arg.rets = parseArgsFromFieldList(ft.Results)
 				//}
-				fmt.Sprintf("Arg(%s)\n", arg.Type)
-				m.Params = append(m.Params, arg)
+				fmt.Sprintf("Arg(%s)\n", arg.Type.String())
+				m.params = append(m.params, arg)
 			}
 		}
 		if n.Type.Results != nil {
 			for _, field := range n.Type.Results.List {
 				var arg code.Argument
-				arg.Name = getIdentName(field.Names)
-				arg.Type = code.ParseType(field.Type)
+				//arg.Names = getIdentName(field.Names)
+				arg.Type = ParseType(field.Names, field.Type)
 				arg.Params = arg.Type.Params()
 				arg.Rets = arg.Type.Rets()
 				//if ft, ok := field.Type.(*ast.FuncType); ok {
-				//	arg.Params = parseArgsFromFieldList(ft.Params)
-				//	arg.Rets = parseArgsFromFieldList(ft.Results)
+				//	arg.params = parseArgsFromFieldList(ft.params)
+				//	arg.rets = parseArgsFromFieldList(ft.Results)
 				//}
-				fmt.Printf("Ret(%s)\n", arg.Type)
-				m.Rets = append(m.Rets, arg)
+				fmt.Printf("RetString(%s)\n", arg.Type.String())
+				m.rets = append(m.rets, arg)
 			}
 		}
 		//if method, ok := inter.Methods[m.name]; ok {
