@@ -2,36 +2,58 @@ package code
 
 import (
 	"fmt"
+	"go/ast"
 	"strings"
 )
 
 type Method struct {
-	name   string
-	params []Argument
-	rets   []Argument
+	Name   string
+	Params []Argument
+	Rets   []Argument
 }
 
-func (m Method) String() string {
-	return fmt.Sprintf("%s(%s) %s", m.name, m.ParamString(), m.RetString())
-}
-
-func (m Method) ParamString() string {
-	return combineArgs(m.rets)
-}
-
-func (m Method) methodFormat() string {
-	f := "%s"
-	if len(m.params) == 0 {
-		f = f + "()"
+func (m *Method) String() string {
+	if m.Name == "" {
+		return fmt.Sprintf("(%s) %s", m.ParamString(), m.RetString())
 	}
-	return f
+	return fmt.Sprintf("%s(%s) %s", m.Name, m.ParamString(), m.RetString())
 }
 
-func (m Method) RetString() string {
-	if len(m.rets) == 0 {
+func (m *Method) ParamString() string {
+	return combineArgs(m.Params)
+}
+
+func (m *Method) RetString() string {
+	if len(m.Rets) == 0 {
 		return ""
 	}
-	return combineArgs(m.rets)
+	if len(m.Rets) == 1 && len(m.Rets[0].Names) == 0 {
+		return m.Rets[0].String()
+	}
+	return combineArgs(m.Rets)
+}
+
+func (m *Method) ParseParam(params *ast.FieldList) {
+	m.Params = parseArgsFromFieldList(params)
+}
+
+func (m *Method) ParseRet(results *ast.FieldList) {
+	m.Rets = parseArgsFromFieldList(results)
+}
+
+func (m *Method) ParseType(expr ast.Expr) {
+	if ft, ok := expr.(*ast.FuncType); ok {
+		m.ParseFuncType(ft)
+	}
+}
+
+func (m *Method) ParseFuncType(ft *ast.FuncType) {
+	if ft.Params != nil {
+		m.ParseParam(ft.Params)
+	}
+	if ft.Results != nil {
+		m.ParseRet(ft.Results)
+	}
 }
 
 func combineArgs(args []Argument) string {

@@ -7,30 +7,29 @@ import (
 )
 
 type Argument struct {
-	Names  []string
-	Type   Type
-	Params []Argument
-	Rets   []Argument
+	Names []string
+	Type  Type
 }
 
+// String returns the string representation of the argument.
 func (a Argument) String() string {
 	if len(a.Names) == 0 {
 		return a.Type.String()
 	}
-	return fmt.Sprintf("%s %s", a.Name(), a.Type.String())
+	return fmt.Sprintf("%s %s", a.NameString(), a.Type.String())
 }
 
-func (a Argument) Name() string {
+func (a Argument) NameString() string {
 	if len(a.Names) == 1 {
 		return a.Names[0]
 	}
 	return strings.Join(a.Names, ",")
 }
 
-func getIdentNames(idents []*ast.Ident) []string {
+func parseIdentNames(idents []*ast.Ident) []string {
 	var names []string
 	for _, name := range idents {
-		idents = append(idents, name)
+		names = append(names, name.Name)
 	}
 	return names
 }
@@ -42,17 +41,14 @@ func parseArgsFromFieldList(fl *ast.FieldList) []Argument {
 		return args
 	}
 	for _, field := range fl.List {
-		var arg Argument
-		arg.Names = getIdentNames(field.Names)
-		arg.Type = ParseType(nil, field.Type)
-		arg.Params = arg.Type.Params()
-		arg.Rets = arg.Type.Rets()
-		//if ft, ok := field.Type.(*ast.FuncType); ok {
-		//	arg.params = parseArgsFromFieldList(ft.params)
-		//	arg.rets = parseArgsFromFieldList(ft.Results)
-		//}
-		//fmt.Println("filed type", arg.Type)
-		args = append(args, arg)
+		args = append(args, argFromField(field))
 	}
 	return args
+}
+
+func argFromField(field *ast.Field) Argument {
+	return Argument{
+		Names: parseIdentNames(field.Names),
+		Type:  parseFieldType(field.Type),
+	}
 }

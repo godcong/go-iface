@@ -3,7 +3,6 @@ package code
 import (
 	"fmt"
 	"go/ast"
-	"strings"
 )
 
 const (
@@ -16,66 +15,50 @@ const (
 }`
 )
 
+type TypeStringer interface {
+	String() string
+}
+
 type Type struct {
-	source          ast.Expr
-	names           []string
-	inType          string
-	inTypeFormat    string
-	inTypeParamList *ast.FieldList
-	inTypeRetList   *ast.FieldList
-	inTypeFunc      func(format string, param, ret *ast.FieldList) string
+	t      TypeStringer
+	name   string
+	inType string
+}
+
+func (t Type) InType() string {
+	return t.inType
 }
 
 func (t Type) String() string {
 	if t.inType == "default" {
-		return t.inTypeFormat
+		return t.name
 	}
-	return t.inType
+	return t.t.String()
 }
 
-func (t Type) Params() []Argument {
-	return parseArgsFromFieldList(t.inTypeParamList)
-
-}
-
-func (t Type) Rets() []Argument {
-	return parseArgsFromFieldList(t.inTypeRetList)
-}
-
-func ParseType(names []*ast.Ident, expr ast.Expr) Type {
+func parseFieldType(expr ast.Expr) Type {
 	t := Type{
-		source:       expr,
-		names:        getIdentNames(names),
-		inType:       "default",
-		inTypeFormat: fmt.Sprintf("%s", expr),
-		inTypeFunc:   parseDefaultTypeString,
+		name:   "",
+		inType: "default",
 	}
 	switch v := expr.(type) {
 	case *ast.FuncType:
 		t.inType = "func"
-		t.inTypeParamList = v.Params
-		t.inTypeRetList = v.Results
-		t.inTypeFormat = funcTypeFormat
-		t.inTypeFunc = parseFuncTypeString
+		t.t = newFuncDec(v)
 	case *ast.StructType:
 		t.inType = "struct"
-		t.inTypeParamList = v.Fields
-		t.inTypeFormat = structTypeFormat
-		//t.inTypeFunc = parseFuncTypeString
+		t.t = newStructDec(v)
+	case *ast.ArrayType:
+		t.inType = "struct"
+		t.t = newArrayDec(v)
+	case *ast.InterfaceType:
+		t.inType = "interface"
+		t.t = newInterfaceDec(v)
+	case *ast.MapType:
+		t.inType = "map"
+		t.t = newMapDec(v)
 	default:
-		//do nothing
+		t.name = fmt.Sprintf("%s", expr)
 	}
 	return t
-}
-
-func parseFuncTypeString(format string, param, ret *ast.FieldList) string {
-	var fields []string
-	for _, field := range param.List {
-		fields = append(fields, fmt.Sprintf("%s", field.Type))
-	}
-	return strings.Join(fields, ", ")
-}
-
-func parseDefaultTypeString(format string, param, ret *ast.FieldList) string {
-	return format
 }
