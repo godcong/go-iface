@@ -1,28 +1,26 @@
-package code
+package parse
 
 import (
-	"fmt"
 	"go/ast"
 	"strings"
 )
+
+var fmtOutput = map[string]string{
+	"default": "%s",
+}
 
 type funcDec struct {
 	*ast.FuncType
 	m Method
 }
 
-func (f funcDec) String() string {
+func (f funcDec) Val() string {
 	return f.m.String()
 }
 
 func newFuncDec(v *ast.FuncType) *funcDec {
 	fd := &funcDec{FuncType: v}
-	if v.Params != nil {
-		fd.m.ParseParam(v.Params)
-	}
-	if v.Results != nil {
-		fd.m.ParseRet(v.Results)
-	}
+	fd.m.Parse(v)
 	return fd
 }
 
@@ -31,15 +29,13 @@ type structDec struct {
 	s Struct
 }
 
-func (s structDec) String() string {
+func (s structDec) Val() string {
 	return s.s.String()
 }
 
 func newStructDec(v *ast.StructType) *structDec {
 	sd := &structDec{StructType: v}
-	if v.Fields != nil {
-		sd.s.ParseVariables(v.Fields)
-	}
+	sd.s.Parse(v)
 	return sd
 }
 
@@ -48,23 +44,23 @@ type arrayDec struct {
 	t Type
 }
 
-func (a arrayDec) String() string {
-	return a.t.String()
+func (a arrayDec) Val() string {
+	return "[]" + a.t.String()
 }
 
 func newArrayDec(v *ast.ArrayType) *arrayDec {
 	ad := &arrayDec{ArrayType: v}
-	ad.t = parseFieldType(v.Elt)
+	ad.t = Parse(v.Elt)
 	return ad
 }
 
 type interfaceDec struct {
 	*ast.InterfaceType
-	Methods []Method
 	t       Type
+	Methods []*Method
 }
 
-func (i interfaceDec) String() string {
+func (i interfaceDec) Val() string {
 	var methods []string
 	for _, m := range i.Methods {
 		methods = append(methods, m.String())
@@ -76,36 +72,33 @@ func (i interfaceDec) String() string {
 
 func newInterfaceDec(v *ast.InterfaceType) *interfaceDec {
 	it := &interfaceDec{InterfaceType: v}
-	fmt.Println("interface decode", v.Methods)
 	if v.Methods != nil {
-		for _, m := range v.Methods.List {
-			names := getIdentName(m.Names)
-			t := parseFieldType(m.Type)
-			if t.InType() == "func" {
-				mm := Method{}
-				if len(names) > 0 {
-					mm.Name = names[0]
+		for _, method := range v.Methods.List {
+			for i := range method.Names {
+				m := &Method{
+					Name: method.Names[i].Name,
 				}
-				mm.ParseType(m.Type)
-				fmt.Println("interface method", names, t.String(), t.InType())
-				it.Methods = append(it.Methods, mm)
+				m.Parse(method.Type)
+				it.Methods = append(it.Methods, m)
 			}
-
 		}
 	}
-
 	return it
 }
 
 type mapDec struct {
 	*ast.MapType
+	Key   Type
+	Value Type
 }
 
-func (m mapDec) String() string {
-	//TODO implement me
-	panic("implement me")
+func (m mapDec) Val() string {
+	return "map[" + m.Key.String() + "]" + m.Value.String()
 }
 
 func newMapDec(v *ast.MapType) *mapDec {
-	return &mapDec{MapType: v}
+	md := &mapDec{MapType: v}
+	md.Key = Parse(v.Key)
+	md.Value = Parse(v.Value)
+	return md
 }

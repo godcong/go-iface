@@ -1,4 +1,4 @@
-package code
+package parse
 
 import (
 	"fmt"
@@ -26,7 +26,7 @@ func (a Argument) NameString() string {
 	return strings.Join(a.Names, ",")
 }
 
-func parseIdentNames(idents []*ast.Ident) []string {
+func IdentNames(idents []*ast.Ident) []string {
 	var names []string
 	for _, name := range idents {
 		names = append(names, name.Name)
@@ -34,9 +34,20 @@ func parseIdentNames(idents []*ast.Ident) []string {
 	return names
 }
 
+func FuncArgs(params *ast.FieldList) []*Argument {
+	if params != nil {
+		var args []*Argument
+		for _, field := range params.List {
+			args = append(args, argFromField(field))
+		}
+		return args
+	}
+	return nil
+}
+
 // parseArgsFromFieldList parse Type from ArrayType,StructType,FuncType,InterfaceType,MapType,ChanType
-func parseArgsFromFieldList(fl *ast.FieldList) []Argument {
-	var args []Argument
+func parseArgsFromFieldList(fl *ast.FieldList) []*Argument {
+	var args []*Argument
 	if fl == nil {
 		return args
 	}
@@ -46,9 +57,23 @@ func parseArgsFromFieldList(fl *ast.FieldList) []Argument {
 	return args
 }
 
-func argFromField(field *ast.Field) Argument {
-	return Argument{
-		Names: parseIdentNames(field.Names),
-		Type:  parseFieldType(field.Type),
+func argFromField(field *ast.Field) *Argument {
+	return &Argument{
+		Names: IdentNames(field.Names),
+		Type:  Parse(field.Type),
 	}
+}
+
+func combineArgs(args []*Argument) string {
+	if len(args) == 0 {
+		return ""
+	}
+	if len(args) == 1 {
+		return args[0].String()
+	}
+	var rets []string
+	for i := range args {
+		rets = append(rets, args[i].String())
+	}
+	return strings.Join(rets, ", ")
 }

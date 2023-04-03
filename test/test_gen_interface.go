@@ -4,26 +4,26 @@ type b interface {
 	B() string
 }
 
-type gi struct {
+type interfaceGen struct {
 }
 
-func (gi) IfRet() interface {
+func (interfaceGen) IfRet() interface {
 	b
 	A() string
 } {
-	return gi{}
+	return interfaceGen{}
 }
 
-func (gi) IfParam(a, b interface {
+func (interfaceGen) IfParam(a, b interface {
 	b
 	A() string
 }) {
 }
 
-func (gi) B() string {
+func (interfaceGen) B() string {
 	return ""
 }
 
-func (gi) A() string {
+func (interfaceGen) A() string {
 	return ""
 }

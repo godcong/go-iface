@@ -1,31 +1,39 @@
 package generator
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"strings"
 	"text/template"
+
+	"github.com/godcong/go-inter/generator/parse"
 )
 
 // Generator is responsible for generating validation files for the given in a go source file.
 type Generator struct {
 	fileSet *token.FileSet
 	tmpl    *template.Template
+	faces   map[string]*parse.Struct
+	target  string
 }
 
 // NewGenerator is a constructor method for creating a new Generator with default
 // templates loaded.
 func NewGenerator() *Generator {
 	return &Generator{
-		tmpl:    template.New("generator"),
+		tmpl:    addEmbeddedTemplates(template.New("generator")),
 		fileSet: token.NewFileSet(),
+		faces:   make(map[string]*parse.Struct),
+		target:  "",
 	}
 }
 
 // GenerateFromPath is responsible for orchestrating the Code generation.  It results in a byte array
 // that can be written to any file desired.  It has already had goimports run on the code before being returned.
-func (g *Generator) GenerateFromPath(path string) ([]byte, error) {
+func (g *Generator) GenerateFromPath(path string) (map[string][]byte, error) {
 	f, err := g.parsePath(path)
 	if err != nil {
 		return nil, fmt.Errorf("generate: error parsing input path '%s': %s", path, err)
@@ -39,30 +47,66 @@ func (g *Generator) parsePath(fileName string) (map[string]*ast.Package, error) 
 	return parser.ParseDir(g.fileSet, fileName, nil, parser.ParseComments)
 }
 
-func (g *Generator) Generate(f map[string]*ast.Package) ([]byte, error) {
-	v := NewVisitor()
-	v.withName = true
+func (g *Generator) Generate(f map[string]*ast.Package) (map[string][]byte, error) {
 	for name, pkg := range f {
+		if g.target == "" {
+			g.target = pkg.Name
+		}
 		fmt.Println("name:", name, ", package", pkg.Name)
 		for fname, file := range pkg.Files {
 			fmt.Println("filename:", fname)
-			ast.Walk(v, file)
+			ast.Walk(g, file)
 		}
 	}
-	for _, m := range v.Interfaces {
-		fmt.Printf("Struct type [%s] has\n", m.Name)
 
+	vBuff := bytes.NewBuffer([]byte{})
+	err := g.tmpl.ExecuteTemplate(vBuff, "header", map[string]interface{}{
+		"package":   "",
+		"version":   "",
+		"revision":  "",
+		"buildDate": "",
+		"builtBy":   "",
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed write template:%v", err)
+	}
+	fmt.Println("buffer:", vBuff.String())
+	for _, m := range g.faces {
+		buf := bytes.NewBuffer(nil)
+		buf.WriteString(fmt.Sprintf("type %s interface {\n", strings.ToTitle(m.Name)))
 		for _, param := range m.Methods {
-			fmt.Printf("Function name: %s\n", param.Name)
-			for _, argument := range param.Params {
-				fmt.Printf("Arguments(%s): %s\n", argument.NameString(), argument.String())
-			}
-			for _, argument := range param.Rets {
-				fmt.Printf("Return types(%s): %s\n", argument.NameString(), argument.String())
-			}
-
+			buf.WriteString(param.String() + "\n")
 		}
-		fmt.Println()
+		buf.WriteString("}")
+		buf.WriteString("\n")
+		fmt.Println(buf.String())
 	}
+
 	return nil, nil
+}
+
+func (g *Generator) Visit(node ast.Node) ast.Visitor {
+	switch n := node.(type) {
+	case *ast.FuncDecl:
+		var s string
+		if n.Recv != nil {
+			for _, arg := range n.Recv.List {
+				s = fmt.Sprintf("%s", arg.Type)
+			}
+		}
+		//skip empty receiver
+		if s == "" {
+			return g
+		}
+		inter := &parse.Struct{Name: s}
+		if i, ok := g.faces[s]; ok {
+			inter = i
+		}
+		m := parseStructMethod(n)
+		if m != nil {
+			inter.Methods = append(inter.Methods, m)
+		}
+		g.faces[s] = inter
+	}
+	return g
 }
