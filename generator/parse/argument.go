@@ -16,14 +16,7 @@ func (a Argument) String() string {
 	if len(a.Names) == 0 {
 		return a.Type.String()
 	}
-	return fmt.Sprintf("%s %s", a.NameString(), a.Type.String())
-}
-
-func (a Argument) NameString() string {
-	if len(a.Names) == 1 {
-		return a.Names[0]
-	}
-	return strings.Join(a.Names, ",")
+	return fmt.Sprintf("%s %s", CombineNames(a.Names), a.Type.String())
 }
 
 func IdentNames(idents []*ast.Ident) []string {
@@ -32,6 +25,17 @@ func IdentNames(idents []*ast.Ident) []string {
 		names = append(names, name.Name)
 	}
 	return names
+}
+
+func CombineNames(names []string) string {
+	switch len(names) {
+	case 0:
+		return ""
+	case 1:
+		return names[0]
+	default:
+		return strings.Join(names, ",")
+	}
 }
 
 func FuncArgs(params *ast.FieldList) []*Argument {

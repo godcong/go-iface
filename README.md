@@ -1,1 +1,1 @@
-# go-inter
+# go-iface

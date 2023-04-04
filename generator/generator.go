@@ -6,11 +6,10 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"strings"
-	"sync"
 	"text/template"
+	"unicode"
 
-	"github.com/godcong/go-inter/generator/parse"
+	"github.com/godcong/go-iface/generator/parse"
 )
 
 // Generator is responsible for generating validation files for the given in a go source file.
@@ -73,17 +72,25 @@ func (g *Generator) Generate(f map[string]*ast.Package) (map[string][]byte, erro
 	fmt.Println("buffer:", vBuff.String())
 	for _, m := range g.faces {
 		buf := bytes.NewBuffer(nil)
-		buf.WriteString(fmt.Sprintf("type %s interface {\n", strings.ToTitle(m.Name)))
+		buf.WriteString(fmt.Sprintf("type %s interface {\n", camelCase(m.Name)))
 		for _, param := range m.Methods {
 			buf.WriteString(param.String() + "\n")
 		}
 		buf.WriteString("}")
 		buf.WriteString("\n")
 		fmt.Println(buf.String())
-		sync.Pool{}
 	}
 
 	return nil, nil
+}
+
+func camelCase(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	cc := []rune(s)
+	cc[0] = unicode.ToUpper(cc[0])
+	return string(cc)
 }
 
 func (g *Generator) Visit(node ast.Node) ast.Visitor {

@@ -27,7 +27,7 @@ func (m *Method) retString() string {
 		if len(m.Ret[0].Names) == 0 {
 			return m.Ret[0].Type.String()
 		}
-		return fmt.Sprintf("(%s %s)", m.Ret[0].Names[0], m.Ret[0].Type.String())
+		return fmt.Sprintf("(%s %s)", CombineNames(m.Ret[0].Names), m.Ret[0].Type.String())
 	default:
 		return "(" + combineArgs(m.Ret) + ")"
 	}
