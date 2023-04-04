@@ -7,6 +7,7 @@ import (
 	"go/parser"
 	"go/token"
 	"strings"
+	"sync"
 	"text/template"
 
 	"github.com/godcong/go-inter/generator/parse"
@@ -61,7 +62,6 @@ func (g *Generator) Generate(f map[string]*ast.Package) (map[string][]byte, erro
 
 	vBuff := bytes.NewBuffer([]byte{})
 	err := g.tmpl.ExecuteTemplate(vBuff, "header", map[string]interface{}{
-		"package":   "",
 		"version":   "",
 		"revision":  "",
 		"buildDate": "",
@@ -80,6 +80,7 @@ func (g *Generator) Generate(f map[string]*ast.Package) (map[string][]byte, erro
 		buf.WriteString("}")
 		buf.WriteString("\n")
 		fmt.Println(buf.String())
+		sync.Pool{}
 	}
 
 	return nil, nil

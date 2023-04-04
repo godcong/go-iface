@@ -1,53 +1,44 @@
 package test
 
-// INTER(name)
+// IFACE(baseGen)
 // @PATH:
-type name struct {
+type baseGen struct {
 }
 
-func (name) A() {
+func (baseGen) NoArgNoRet() {
 
 }
 
-func (name) B(i int) int {
+func (baseGen) IntArgRet(i int) int {
 	return 0
 }
 
-func (name) C(s string) string {
+func (baseGen) StringArgRet(s string) string {
 	return ""
 }
 
-func (name) D(i int, s string) string {
+func (baseGen) IntString(i int, s string) string {
 	return ""
 }
 
-func (name) E() func(string) string {
+func (baseGen) FuncRet() func(string) string {
 	return func(s string) string {
 		return s
 	}
 }
 
-// INTER(Namae)
-// @PATH[]
-type namae struct {
+func (baseGen) StructRet() struct{ v int } {
+	return struct{ v int }{v: 0}
 }
 
-func (namae) A() {
+func (baseGen) F() {
 
 }
 
-func (namae) B(i int) int {
-	return 0
+func (baseGen) G(i int) (int, error) {
+	return 0, nil
 }
 
-func (namae) C(s string) string {
-	return ""
-}
-
-func (namae) D(i int, s string) string {
-	return ""
-}
-
-func (namae) E(fn func(string) string) (f func(string) string) {
-	return fn
+func (baseGen) H(s string) (string, error) {
+	return "", nil
 }

@@ -7,7 +7,7 @@ import (
 	"text/template"
 )
 
-//go:embed inter.tmpl inter_string.tmpl
+//go:embed iface.tmpl
 var content embed.FS
 
 func addEmbeddedTemplates(tmpl *template.Template) *template.Template {

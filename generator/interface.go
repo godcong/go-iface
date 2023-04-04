@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"go/ast"
 
-	"github.com/godcong/go-inter/generator/parse"
+	"github.com/godcong/go-iface/generator/parse"
 )
 
 type Interface struct {
 	i        map[string]*parse.Struct
 	withName bool
+	target   string
+	pkg      string
 }
 
 func (v *Interface) Visit(node ast.Node) ast.Visitor {
