@@ -3,6 +3,7 @@ package parse
 import (
 	"fmt"
 	"go/ast"
+	"strings"
 )
 
 type Parser interface {
@@ -35,10 +36,32 @@ func Parse(node ast.Node) Type {
 	return t
 }
 
-func getIdentName(idents []*ast.Ident) []string {
+func IdentNames(idents []*ast.Ident) []string {
 	var names []string
 	for _, name := range idents {
 		names = append(names, name.Name)
 	}
 	return names
+}
+
+func CombineNames(names []string) string {
+	switch len(names) {
+	case 0:
+		return ""
+	case 1:
+		return names[0]
+	default:
+		return strings.Join(names, ",")
+	}
+}
+
+func FuncArgs(params *ast.FieldList) []*Argument {
+	if params != nil {
+		var args []*Argument
+		for _, field := range params.List {
+			args = append(args, argFromField(field))
+		}
+		return args
+	}
+	return nil
 }

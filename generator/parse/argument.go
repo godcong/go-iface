@@ -19,48 +19,6 @@ func (a Argument) String() string {
 	return fmt.Sprintf("%s %s", CombineNames(a.Names), a.Type.String())
 }
 
-func IdentNames(idents []*ast.Ident) []string {
-	var names []string
-	for _, name := range idents {
-		names = append(names, name.Name)
-	}
-	return names
-}
-
-func CombineNames(names []string) string {
-	switch len(names) {
-	case 0:
-		return ""
-	case 1:
-		return names[0]
-	default:
-		return strings.Join(names, ",")
-	}
-}
-
-func FuncArgs(params *ast.FieldList) []*Argument {
-	if params != nil {
-		var args []*Argument
-		for _, field := range params.List {
-			args = append(args, argFromField(field))
-		}
-		return args
-	}
-	return nil
-}
-
-// parseArgsFromFieldList parse Type from ArrayType,StructType,FuncType,InterfaceType,MapType,ChanType
-func parseArgsFromFieldList(fl *ast.FieldList) []*Argument {
-	var args []*Argument
-	if fl == nil {
-		return args
-	}
-	for _, field := range fl.List {
-		args = append(args, argFromField(field))
-	}
-	return args
-}
-
 func argFromField(field *ast.Field) *Argument {
 	return &Argument{
 		Names: IdentNames(field.Names),
