@@ -1,7 +1,6 @@
 package parse
 
 import (
-	"fmt"
 	"go/ast"
 )
 
@@ -15,7 +14,6 @@ func (s *Struct) parseFunc(n *ast.FuncDecl) {
 	m := Method{
 		Name: n.Name.Name,
 	}
-	fmt.Printf("struct(%s) func %s()\n", s, m.Name)
 	if n.Type.Params != nil {
 		m.Args = FuncArgs(n.Type.Params)
 	}
@@ -26,10 +24,16 @@ func (s *Struct) parseFunc(n *ast.FuncDecl) {
 	s.Methods = append(s.Methods, &m)
 }
 
+func (s *Struct) parseVariables(n *ast.StructType) {
+	if n.Fields != nil {
+		s.Variables = FuncArgs(n.Fields)
+	}
+}
+
 func (s *Struct) Parse(v ast.Node) {
 	switch t := v.(type) {
 	case *ast.StructType:
-		s.Variables = FuncArgs(t.Fields)
+		s.parseVariables(t)
 	case *ast.FuncDecl:
 		s.parseFunc(t)
 	}
