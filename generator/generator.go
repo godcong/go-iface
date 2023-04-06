@@ -88,9 +88,41 @@ func camelCase(s string) string {
 	if len(s) == 0 {
 		return s
 	}
-	cc := []rune(s)
-	cc[0] = unicode.ToUpper(cc[0])
-	return string(cc)
+	source := []rune(s)
+	size := len(source)
+	ret := make([]rune, 0)
+
+	idx := 0
+	for i := 0; i < size; i++ {
+		if !unicode.IsLetter(source[i]) {
+			continue
+		}
+		idx = i
+		break
+	}
+	if idx >= size {
+		return s
+	}
+	//start at first idx
+	ret = append(ret, unicode.ToUpper(source[idx]))
+
+	toUpper := false
+	for idx++; idx < size; idx++ {
+		if source[idx] == '_' {
+			toUpper = true
+			continue
+		}
+		if toUpper {
+			if !unicode.IsLetter(source[idx]) {
+				ret = append(ret, '_')
+			}
+			source[idx] = unicode.ToUpper(source[idx])
+			toUpper = false
+		}
+		ret = append(ret, source[idx])
+
+	}
+	return string(ret)
 }
 
 func (g *Generator) Visit(node ast.Node) ast.Visitor {
