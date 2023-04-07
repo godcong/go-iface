@@ -1,4 +1,4 @@
-package test
+package tst
 
 type arrayGen struct {
 }

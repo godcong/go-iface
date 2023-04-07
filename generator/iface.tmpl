@@ -4,15 +4,19 @@
 // Revision: {{ .revision }}
 // Build Date: {{ .buildDate }}
 // Built By: {{ .builtBy }}
+
+package {{.package}}
+
 {{end -}}
 
 {{- define "iface"}}
-package {{.package}}
 
-{{- $interName := .iface.Name -}}
+
+{{- $interName := .name -}}
+{{- $Methods := .methods -}}
 type {{$interName}} interface {
+{{ range $Methods }}
+{{ . }}
+{{- end }}
 }
-{{- $interName := .iface.Name -}}
-{{- $interType := .iface.Type -}}
-{{- $noComments := .nocomments -}}
 {{end -}}

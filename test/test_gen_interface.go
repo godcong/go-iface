@@ -1,4 +1,4 @@
-package test
+package tst
 
 type B interface {
 	B() string

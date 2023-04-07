@@ -1,4 +1,4 @@
-package test
+package tst
 
 type PreDefineMethod func(int) string
 type PreDefineString string

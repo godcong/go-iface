@@ -65,7 +65,7 @@ func (i interfaceDec) Val() string {
 	for _, m := range i.Methods {
 		methods = append(methods, m.String())
 	}
-	return "interface {" +
+	return "interface {\n" +
 		strings.Join(methods, "\n") +
 		"}"
 }

@@ -1,4 +1,4 @@
-package tst
+package tst_test
 
 // IFACE(baseGen)
 // @PATH:

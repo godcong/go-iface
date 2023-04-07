@@ -6,6 +6,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"strings"
 	"text/template"
 	"unicode"
 
@@ -14,20 +15,22 @@ import (
 
 // Generator is responsible for generating validation files for the given in a go source file.
 type Generator struct {
-	fileSet *token.FileSet
-	tmpl    *template.Template
-	faces   map[string]*parse.Struct
-	target  string
+	fileSet   *token.FileSet
+	tmpl      *template.Template
+	faces     map[string]*parse.Struct
+	targetPkg string
+	suffix    string
 }
 
-// NewGenerator is a constructor method for creating a new Generator with default
+// New is a constructor method for creating a new Generator with default
 // templates loaded.
-func NewGenerator() *Generator {
+func New() *Generator {
 	return &Generator{
-		tmpl:    addEmbeddedTemplates(template.New("generator")),
-		fileSet: token.NewFileSet(),
-		faces:   make(map[string]*parse.Struct),
-		target:  "",
+		tmpl:      addEmbeddedTemplates(template.New("generator")),
+		fileSet:   token.NewFileSet(),
+		faces:     make(map[string]*parse.Struct),
+		targetPkg: "",
+		suffix:    "iface",
 	}
 }
 
@@ -49,39 +52,68 @@ func (g *Generator) parsePath(fileName string) (map[string]*ast.Package, error) 
 
 func (g *Generator) Generate(f map[string]*ast.Package) (map[string][]byte, error) {
 	for name, pkg := range f {
-		if g.target == "" {
-			g.target = pkg.Name
+		if strings.HasSuffix(name, "_test") {
+			continue
 		}
-		fmt.Println("name:", name, ", package", pkg.Name)
-		for fname, file := range pkg.Files {
-			fmt.Println("filename:", fname)
+		if g.targetPkg == "" {
+			g.targetPkg = pkg.Name
+		}
+		for _, file := range pkg.Files {
 			ast.Walk(g, file)
 		}
 	}
-
-	vBuff := bytes.NewBuffer([]byte{})
-	err := g.tmpl.ExecuteTemplate(vBuff, "header", map[string]interface{}{
-		"version":   "",
-		"revision":  "",
-		"buildDate": "",
-		"builtBy":   "",
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed write template:%v", err)
-	}
-	fmt.Println("buffer:", vBuff.String())
+	ret := make(map[string][]byte)
 	for _, m := range g.faces {
-		buf := bytes.NewBuffer(nil)
-		buf.WriteString(fmt.Sprintf("type %s interface {\n", camelCase(m.Name)))
-		for _, param := range m.Methods {
-			buf.WriteString(param.String() + "\n")
+		vBuff := bytes.NewBuffer([]byte{})
+		err := g.tmpl.ExecuteTemplate(vBuff, "header", map[string]interface{}{
+			"package":   g.targetPkg,
+			"version":   "",
+			"revision":  "",
+			"buildDate": "",
+			"builtBy":   "",
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed write template:%v", err)
 		}
-		buf.WriteString("}")
-		buf.WriteString("\n")
-		fmt.Println(buf.String())
+		var methods []string
+		for _, param := range m.Methods {
+			methods = append(methods, param.String())
+		}
+		err = g.tmpl.ExecuteTemplate(vBuff, "iface", map[string]interface{}{
+			"name":    camelCase(m.Name),
+			"methods": methods,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed write template:%v", err)
+		}
+		filename := strings.Join([]string{snakeCase(m.Name), g.suffix}, "_")
+		ret[filename] = vBuff.Bytes()
 	}
+	return ret, nil
+}
 
-	return nil, nil
+func (g *Generator) Visit(node ast.Node) ast.Visitor {
+	switch n := node.(type) {
+	case *ast.FuncDecl:
+		var s string
+		if n.Recv != nil {
+			for _, arg := range n.Recv.List {
+				s = fmt.Sprintf("%s", arg.Type)
+			}
+		}
+		//skip empty receiver
+		if s == "" {
+			return g
+		}
+		inter := &parse.Struct{Name: s}
+		if i, ok := g.faces[s]; ok {
+			inter = i
+		}
+
+		inter.Parse(n)
+		g.faces[s] = inter
+	}
+	return g
 }
 
 func camelCase(s string) string {
@@ -125,26 +157,49 @@ func camelCase(s string) string {
 	return string(ret)
 }
 
-func (g *Generator) Visit(node ast.Node) ast.Visitor {
-	switch n := node.(type) {
-	case *ast.FuncDecl:
-		var s string
-		if n.Recv != nil {
-			for _, arg := range n.Recv.List {
-				s = fmt.Sprintf("%s", arg.Type)
-			}
-		}
-		//skip empty receiver
-		if s == "" {
-			return g
-		}
-		inter := &parse.Struct{Name: s}
-		if i, ok := g.faces[s]; ok {
-			inter = i
-		}
-
-		inter.Parse(n)
-		g.faces[s] = inter
+func snakeCase(s string) string {
+	if len(s) == 0 {
+		return s
 	}
-	return g
+	source := []rune(s)
+	ret := make([]rune, 0)
+	size := len(source)
+
+	idx := 0
+	for i := 0; i < size; i++ {
+		if !unicode.IsLetter(source[i]) {
+			continue
+		}
+		idx = i
+		break
+	}
+	if idx >= size {
+		return s
+	}
+
+	preUpper := false
+	preLine := false
+
+	for i, r := range source[idx:] {
+		if unicode.IsUpper(r) {
+			if i == 0 || preUpper || preLine {
+				ret = append(ret, unicode.ToLower(r))
+			} else {
+				ret = append(ret, '_', unicode.ToLower(r))
+			}
+			preUpper = true
+			preLine = false
+			continue
+		} else if r == '_' {
+			if i != 0 {
+				ret = append(ret, r)
+			}
+			preLine = true
+			continue
+		}
+		ret = append(ret, r)
+		preUpper = false
+		preLine = false
+	}
+	return string(ret)
 }
