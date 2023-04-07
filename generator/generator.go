@@ -142,10 +142,8 @@ func (g *Generator) Visit(node ast.Node) ast.Visitor {
 		if i, ok := g.faces[s]; ok {
 			inter = i
 		}
-		m := parseStructMethod(n)
-		if m != nil {
-			inter.Methods = append(inter.Methods, m)
-		}
+
+		inter.Parse(n)
 		g.faces[s] = inter
 	}
 	return g

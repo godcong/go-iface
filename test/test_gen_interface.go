@@ -1,6 +1,6 @@
 package test
 
-type b interface {
+type B interface {
 	B() string
 }
 
@@ -8,14 +8,14 @@ type interfaceGen struct {
 }
 
 func (interfaceGen) IfRet() interface {
-	b
+	B
 	A() string
 } {
 	return interfaceGen{}
 }
 
 func (interfaceGen) IfParam(a, b interface {
-	b
+	B
 	A() string
 }) {
 }

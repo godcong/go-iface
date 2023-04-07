@@ -6,17 +6,20 @@ import (
 )
 
 type Method struct {
-	Name string
-	Type Type
-	Args []*Argument
-	Ret  []*Argument
+	Names []string
+	Type  Type
+	Args  []*Argument
+	Ret   []*Argument
 }
 
 func (m *Method) String() string {
-	if m.Name == "" {
+	if m.Type.InType() == "default" {
+		return m.Type.String()
+	}
+	if len(m.Names) == 0 {
 		return fmt.Sprintf("func(%s) %s", combineArgs(m.Args), m.retString())
 	}
-	return fmt.Sprintf("%s(%s) %s", m.Name, combineArgs(m.Args), m.retString())
+	return fmt.Sprintf("%s(%s) %s", CombineNames(m.Names), combineArgs(m.Args), m.retString())
 }
 
 func (m *Method) retString() string {

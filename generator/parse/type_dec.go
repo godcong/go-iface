@@ -74,13 +74,17 @@ func newInterfaceDec(v *ast.InterfaceType) *interfaceDec {
 	it := &interfaceDec{InterfaceType: v}
 	if v.Methods != nil {
 		for _, method := range v.Methods.List {
-			for i := range method.Names {
-				m := &Method{
-					Name: method.Names[i].Name,
-				}
+			var m Method
+			t := Parse(method.Type)
+			if t.InType() != "default" {
 				m.Parse(method.Type)
-				it.Methods = append(it.Methods, m)
+				for i := range method.Names {
+					m.Names = append(m.Names, method.Names[i].String())
+				}
+			} else {
+				m.Type = t
 			}
+			it.Methods = append(it.Methods, &m)
 		}
 	}
 	return it

@@ -12,15 +12,9 @@ type Struct struct {
 
 func (s *Struct) parseFunc(n *ast.FuncDecl) {
 	m := Method{
-		Name: n.Name.Name,
+		Names: []string{n.Name.Name},
 	}
-	if n.Type.Params != nil {
-		m.Args = FuncArgs(n.Type.Params)
-	}
-
-	if n.Type.Results != nil {
-		m.Ret = FuncArgs(n.Type.Results)
-	}
+	m.Parse(n.Type)
 	s.Methods = append(s.Methods, &m)
 }
 
