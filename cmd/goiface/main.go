@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/godcong/go-iface"
@@ -41,12 +40,7 @@ func main() {
 					panic(fmt.Errorf("failed writing to file %s: %s", outFilePath, err))
 				}
 			}
-			c := exec.Command("gofmt", "-l", "-w", "-s", fp)
-			err = c.Run()
-			if err != nil {
-				panic(err)
-			}
-			fmt.Println("finished")
+			fmt.Println("all finished!")
 		},
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if fp == "." {
