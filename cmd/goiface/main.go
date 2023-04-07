@@ -34,13 +34,12 @@ func main() {
 				panic(err)
 			}
 			for name, iface := range ifaces {
-				mode := int(0o644)
+				mode := 0o644
 				outFilePath := filepath.Join(fp, name+".go")
 				err = os.WriteFile(outFilePath, iface, os.FileMode(mode))
 				if err != nil {
 					panic(fmt.Errorf("failed writing to file %s: %s", outFilePath, err))
 				}
-
 			}
 			c := exec.Command("gofmt", "-l", "-w", "-s", fp)
 			err = c.Run()

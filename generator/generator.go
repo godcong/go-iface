@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
+	"go/format"
 	"go/parser"
 	"go/token"
 	"strings"
@@ -87,7 +88,13 @@ func (g *Generator) Generate(f map[string]*ast.Package) (map[string][]byte, erro
 			return nil, fmt.Errorf("failed write template:%v", err)
 		}
 		filename := strings.Join([]string{snakeCase(m.Name), g.suffix}, "_")
-		ret[filename] = vBuff.Bytes()
+
+		formatted, err := format.Source(vBuff.Bytes())
+		if err != nil {
+			return nil, err
+		}
+		ret[filename] = formatted
+
 	}
 	return ret, nil
 }
