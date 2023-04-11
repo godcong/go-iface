@@ -52,15 +52,15 @@ func (a arrayDec) Val() string {
 
 func newArrayDec(v *ast.ArrayType) *arrayDec {
 	ad := &arrayDec{ArrayType: v}
-	ad.symbol = "[]"
-	if v.Len != nil {
-		switch l := v.Len.(type) {
-		case *ast.BasicLit:
-			ad.symbol = "[" + l.Value + "]"
-		case *ast.Ellipsis:
-			ad.symbol = "[...]"
-		}
+	switch l := v.Len.(type) {
+	case *ast.BasicLit:
+		ad.symbol = "[" + l.Value + "]"
+	case *ast.Ellipsis:
+		ad.symbol = "[...]"
+	default:
+		ad.symbol = "[]"
 	}
+	//}
 	ad.t = Parse(v.Elt)
 	return ad
 }
