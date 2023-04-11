@@ -1,7 +1,6 @@
 package parse
 
 import (
-	"fmt"
 	"go/ast"
 	"strings"
 )
@@ -14,6 +13,7 @@ func Parse(node ast.Node) Type {
 	t := Type{
 		inType: "default",
 	}
+
 	switch v := node.(type) {
 	case *ast.FuncType:
 		t.inType = "func"
@@ -22,7 +22,7 @@ func Parse(node ast.Node) Type {
 		t.inType = "struct"
 		t.p = newStructDec(v)
 	case *ast.ArrayType:
-		t.inType = "struct"
+		t.inType = "array"
 		t.p = newArrayDec(v)
 	case *ast.InterfaceType:
 		t.inType = "interface"
@@ -30,9 +30,22 @@ func Parse(node ast.Node) Type {
 	case *ast.MapType:
 		t.inType = "map"
 		t.p = newMapDec(v)
+	case *ast.ChanType:
+		t.inType = "chan"
+		t.p = newChanDec(v)
+	case *ast.Ellipsis:
+		t.inType = "ellipsis"
+		t.p = newEllipsisDec(v)
 	default:
-		t.t = fmt.Sprintf("%s", node)
+		t.p = newDefaultDec(node)
+		//log.Info("parse type", "type", node)
+		//if v, ok := node.(*ast.StarExpr); ok {
+		//	t.t = fmt.Sprintf("%s", v.X)
+		//} else {
+		//	t.t = fmt.Sprintf("%s", node)
+		//}
 	}
+	t.t = t.p.Val()
 	return t
 }
 

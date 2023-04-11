@@ -11,8 +11,5 @@ func (t Type) InType() string {
 }
 
 func (t Type) String() string {
-	if t.inType == "default" {
-		return t.t
-	}
-	return t.p.Val()
+	return t.t
 }

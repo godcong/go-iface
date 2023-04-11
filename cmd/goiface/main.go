@@ -25,7 +25,7 @@ func main() {
 
 	var rootCmd = &cobra.Command{
 		Use:     programName,
-		Short:   "generate interface from structg",
+		Short:   "generate interface from struct",
 		Version: iface.Version,
 		Run: func(cmd *cobra.Command, args []string) {
 			ifaces, err := gen.GenerateFromPath(fp)
@@ -33,7 +33,7 @@ func main() {
 				panic(err)
 			}
 			for name, iface := range ifaces {
-				mode := 0o644
+				mode := 0644
 				outFilePath := filepath.Join(fp, name+".go")
 				err = os.WriteFile(outFilePath, iface, os.FileMode(mode))
 				if err != nil {

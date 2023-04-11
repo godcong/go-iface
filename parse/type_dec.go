@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"fmt"
 	"go/ast"
 	"strings"
 )
@@ -41,15 +42,25 @@ func newStructDec(v *ast.StructType) *structDec {
 
 type arrayDec struct {
 	*ast.ArrayType
-	t Type
+	symbol string
+	t      Type
 }
 
 func (a arrayDec) Val() string {
-	return "[]" + a.t.String()
+	return a.symbol + a.t.String()
 }
 
 func newArrayDec(v *ast.ArrayType) *arrayDec {
 	ad := &arrayDec{ArrayType: v}
+	ad.symbol = "[]"
+	if v.Len != nil {
+		switch l := v.Len.(type) {
+		case *ast.BasicLit:
+			ad.symbol = "[" + l.Value + "]"
+		case *ast.Ellipsis:
+			ad.symbol = "[...]"
+		}
+	}
 	ad.t = Parse(v.Elt)
 	return ad
 }
@@ -105,4 +116,68 @@ func newMapDec(v *ast.MapType) *mapDec {
 	md.Key = Parse(v.Key)
 	md.Value = Parse(v.Value)
 	return md
+}
+
+type chanDec struct {
+	*ast.ChanType
+	Value Type
+}
+
+func (c chanDec) Val() string {
+	switch c.Dir {
+	case ast.RECV:
+		return "<-chan " + c.Value.String()
+	case ast.SEND:
+		return "chan<- " + c.Value.String()
+	default:
+		return "chan " + c.Value.String()
+	}
+}
+
+func newChanDec(v *ast.ChanType) *chanDec {
+	cd := &chanDec{ChanType: v}
+	cd.Value = Parse(v.Value)
+	return cd
+}
+
+type ellipsisDec struct {
+	*ast.Ellipsis
+	Value Type
+}
+
+func (c ellipsisDec) Val() string {
+	return "..." + c.Value.String()
+}
+
+func newEllipsisDec(v *ast.Ellipsis) *ellipsisDec {
+	ed := &ellipsisDec{Ellipsis: v}
+	ed.Value = Parse(v.Elt)
+	return ed
+}
+
+type defaultDec struct {
+	Node    ast.Node
+	isStart bool
+	t       string
+	p       Type
+}
+
+func (d defaultDec) Val() string {
+	if d.isStart {
+		return "*" + d.t
+	}
+	return d.t
+}
+
+func newDefaultDec(node ast.Node) *defaultDec {
+	dd := &defaultDec{Node: node}
+	switch n := node.(type) {
+	case *ast.StarExpr:
+		dd.isStart = true
+		dd.p = Parse(n.X)
+		dd.t = dd.p.String()
+	default:
+		dd.t = fmt.Sprintf("%s", n)
+	}
+	return dd
 }

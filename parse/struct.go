@@ -2,12 +2,14 @@ package parse
 
 import (
 	"go/ast"
+	"strings"
 )
 
 type Struct struct {
 	Name      string
 	Variables []*Argument
 	Methods   []*Method
+	//OverLoad  []*Method
 }
 
 func (s *Struct) parseFunc(n *ast.FuncDecl) {
@@ -30,6 +32,7 @@ func (s *Struct) Parse(v ast.Node) {
 		s.parseVariables(t)
 	case *ast.FuncDecl:
 		s.parseFunc(t)
+		s.parseDoc(t)
 	}
 }
 
@@ -53,4 +56,18 @@ func (s *Struct) String() string {
 		methods += "(" + s.Name + ") " + s.Methods[i].String() + "\n"
 	}
 	return str + "\n" + methods
+}
+
+func (s *Struct) parseDoc(t *ast.FuncDecl) {
+	if t.Doc != nil {
+		for _, c := range t.Doc.List {
+			if strings.HasPrefix(c.Text, "//") {
+				comment := strings.TrimSpace(strings.TrimPrefix(c.Text, "//"))
+				if strings.HasPrefix(comment, "OVERLOAD(") && strings.HasSuffix(comment, ")") {
+					name := strings.TrimSuffix(strings.TrimPrefix(comment, "OVERLOAD("), ")")
+					s.Methods[len(s.Methods)-1].Names = append(s.Methods[len(s.Methods)-1].Names, name)
+				}
+			}
+		}
+	}
 }

@@ -14,7 +14,20 @@ func (interfaceGen) IfRet() interface {
 	return interfaceGen{}
 }
 
+func (interfaceGen) IfRetP() interface {
+	B
+	A() string
+} {
+	return interfaceGen{}
+}
+
 func (interfaceGen) IfParam(a, b interface {
+	B
+	A() string
+}) {
+}
+
+func (interfaceGen) IfParamP(a, b *interface {
 	B
 	A() string
 }) {

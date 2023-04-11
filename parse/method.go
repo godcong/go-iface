@@ -39,9 +39,11 @@ func (m *Method) retString() string {
 func (m *Method) Parse(expr ast.Node) {
 	if ft, ok := expr.(*ast.FuncType); ok {
 		if ft.Params != nil {
+			//log.Info("parse args")
 			m.Args = FuncArgs(ft.Params)
 		}
 		if ft.Results != nil {
+			//log.Info("parse ret")
 			m.Ret = FuncArgs(ft.Results)
 		}
 	}

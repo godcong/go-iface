@@ -1,110 +1,100 @@
-package generator
+package overloader
 
 import (
-	"bytes"
 	"fmt"
 	"go/ast"
-	"go/format"
 	"go/parser"
 	"go/token"
-	"io/fs"
-	"path/filepath"
 	"strings"
-	"text/template"
 	"unicode"
 
 	"github.com/godcong/go-iface/parse"
 )
 
-// Generator is responsible for generating validation files for the given in a go source file.
-type Generator struct {
-	fileSet   *token.FileSet
-	tmpl      *template.Template
-	faces     map[string]*parse.Struct
-	targetPkg string
-	suffix    string
+type OverLoader struct {
+	fileSet *token.FileSet
+	//tmpl      *template.Template
+	faces  map[string]*parse.Struct
+	pkg    string
+	suffix string
 }
 
-// New is a constructor method for creating a new Generator with default
+// New is a constructor method for creating a new OverLoader with default
 // templates loaded.
-func New() *Generator {
-	return &Generator{
-		tmpl:      addEmbeddedTemplates(template.New("generator")),
-		fileSet:   token.NewFileSet(),
-		faces:     make(map[string]*parse.Struct),
-		targetPkg: "",
-		suffix:    "iface",
+func New() *OverLoader {
+	return &OverLoader{
+		//tmpl:      addEmbeddedTemplates(template.New("generator")),
+		fileSet: token.NewFileSet(),
+		faces:   make(map[string]*parse.Struct),
+		suffix:  "overload",
 	}
 }
 
 // GenerateFromPath is responsible for orchestrating the Code generation.  It results in a byte array
 // that can be written to any file desired.  It has already had goimports run on the code before being returned.
-func (g *Generator) GenerateFromPath(path string) (map[string][]byte, error) {
-	f, err := g.parsePath(path)
+func (l *OverLoader) GenerateFromPath(path string) (map[string][]byte, error) {
+	f, err := l.parsePath(path)
 	if err != nil {
 		return nil, fmt.Errorf("generate: error parsing input path '%s': %s", path, err)
 	}
-	return g.Generate(f)
+	return l.Generate(f)
 }
 
 // parsePath simply calls the go/parser ParseFile function with an empty token.FileSet
-func (g *Generator) parsePath(fileName string) (map[string]*ast.Package, error) {
+func (l *OverLoader) parsePath(fileName string) (map[string]*ast.Package, error) {
 	// Parse the file given in arguments
-	return parser.ParseDir(g.fileSet, fileName, func(info fs.FileInfo) bool {
-		//log.Info("parse file", "name", info.Name())
-		return !strings.HasSuffix(strings.TrimSuffix(info.Name(), filepath.Ext(info.Name())), g.suffix)
-	}, parser.ParseComments)
+	return parser.ParseDir(l.fileSet, fileName, nil, parser.ParseComments)
 }
 
-func (g *Generator) Generate(f map[string]*ast.Package) (map[string][]byte, error) {
+func (l *OverLoader) Generate(f map[string]*ast.Package) (map[string][]byte, error) {
 	for name, pkg := range f {
 		if strings.HasSuffix(name, "_test") {
 			continue
 		}
-		if g.targetPkg == "" {
-			g.targetPkg = pkg.Name
+		if l.pkg == "" {
+			l.pkg = pkg.Name
 		}
 		for _, file := range pkg.Files {
-			ast.Walk(g, file)
+			ast.Walk(l, file)
 		}
 	}
 	ret := make(map[string][]byte)
-	for _, m := range g.faces {
-		vBuff := bytes.NewBuffer([]byte{})
-		err := g.tmpl.ExecuteTemplate(vBuff, "header", map[string]interface{}{
-			"package":   g.targetPkg,
-			"version":   "",
-			"revision":  "",
-			"buildDate": "",
-			"builtBy":   "",
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed write template:%v", err)
-		}
-		var methods []string
-		for _, param := range m.Methods {
-			methods = append(methods, param.String())
-		}
-		err = g.tmpl.ExecuteTemplate(vBuff, "iface", map[string]interface{}{
-			"name":    camelCase(m.Name),
-			"methods": methods,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed write template:%v", err)
-		}
-		filename := strings.Join([]string{snakeCase(m.Name), g.suffix}, "_")
-
-		formatted, err := format.Source(vBuff.Bytes())
-		if err != nil {
-			return nil, err
-		}
-		ret[filename] = formatted
-
-	}
+	//for _, m := range l.faces {
+	//	vBuff := bytes.NewBuffer([]byte{})
+	//	err := l.tmpl.ExecuteTemplate(vBuff, "header", map[string]interface{}{
+	//		"package":   l.targetPkg,
+	//		"version":   "",
+	//		"revision":  "",
+	//		"buildDate": "",
+	//		"builtBy":   "",
+	//	})
+	//	if err != nil {
+	//		return nil, fmt.Errorf("failed write template:%v", err)
+	//	}
+	//	var methods []string
+	//	for _, param := range m.Methods {
+	//		methods = append(methods, param.String())
+	//	}
+	//	err = l.tmpl.ExecuteTemplate(vBuff, "iface", map[string]interface{}{
+	//		"name":    camelCase(m.Name),
+	//		"methods": methods,
+	//	})
+	//	if err != nil {
+	//		return nil, fmt.Errorf("failed write template:%v", err)
+	//	}
+	//	filename := strings.Join([]string{snakeCase(m.Name), l.suffix}, "_")
+	//
+	//	formatted, err := format.Source(vBuff.Bytes())
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	ret[filename] = formatted
+	//
+	//}
 	return ret, nil
 }
 
-func (g *Generator) Visit(node ast.Node) ast.Visitor {
+func (l *OverLoader) Visit(node ast.Node) ast.Visitor {
 	switch n := node.(type) {
 	case *ast.FuncDecl:
 		var s string
@@ -115,17 +105,17 @@ func (g *Generator) Visit(node ast.Node) ast.Visitor {
 		}
 		//skip empty receiver
 		if s == "" {
-			return g
+			return l
 		}
 		inter := &parse.Struct{Name: s}
-		if i, ok := g.faces[s]; ok {
+		if i, ok := l.faces[s]; ok {
 			inter = i
 		}
 
 		inter.Parse(n)
-		g.faces[s] = inter
+		l.faces[s] = inter
 	}
-	return g
+	return l
 }
 
 func camelCase(s string) string {

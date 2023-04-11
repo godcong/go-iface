@@ -9,7 +9,7 @@ func (baseGen) NoArgNoRet() {
 
 }
 
-func (baseGen) IntArgRet(i int) int {
+func (baseGen) IntArgRet(i int, j *int) int {
 	return 0
 }
 
@@ -19,6 +19,9 @@ func (baseGen) StringArgRet(s string) string {
 
 func (baseGen) IntString(i int, s string) string {
 	return ""
+}
+
+func (baseGen) Variable(vars string, vari ...int) {
 }
 
 func (baseGen) FuncRet() func(string) string {
