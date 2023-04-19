@@ -33,17 +33,15 @@ func Parse(node ast.Node) Type {
 	case *ast.ChanType:
 		t.inType = "chan"
 		t.p = newChanDec(v)
+	case *ast.ParenExpr:
+		t.inType = "paren"
+		t.p = newParenDec(v)
 	case *ast.Ellipsis:
 		t.inType = "ellipsis"
 		t.p = newEllipsisDec(v)
 	default:
+		//default type case
 		t.p = newDefaultDec(node)
-		//log.Info("parse type", "type", node)
-		//if v, ok := node.(*ast.StarExpr); ok {
-		//	t.t = fmt.Sprintf("%s", v.X)
-		//} else {
-		//	t.t = fmt.Sprintf("%s", node)
-		//}
 	}
 	t.t = t.p.Val()
 	return t

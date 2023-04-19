@@ -135,6 +135,7 @@ func (c chanDec) Val() string {
 }
 
 func newChanDec(v *ast.ChanType) *chanDec {
+	log.Info("chan")
 	cd := &chanDec{ChanType: v}
 	cd.Value = Parse(v.Value)
 	return cd
@@ -155,6 +156,21 @@ func newEllipsisDec(v *ast.Ellipsis) *ellipsisDec {
 	return ed
 }
 
+type parenDec struct {
+	Paren *ast.ParenExpr
+	Value Type
+}
+
+func newParenDec(v *ast.ParenExpr) *parenDec {
+	ed := &parenDec{Paren: v}
+	ed.Value = Parse(v.X)
+	return ed
+}
+
+func (d parenDec) Val() string {
+	return "(" + d.Value.String() + ")"
+}
+
 type defaultDec struct {
 	Node    ast.Node
 	isStart bool
@@ -171,13 +187,17 @@ func (d defaultDec) Val() string {
 
 func newDefaultDec(node ast.Node) *defaultDec {
 	dd := &defaultDec{Node: node}
+
 	switch n := node.(type) {
 	case *ast.StarExpr:
 		dd.isStart = true
 		dd.p = Parse(n.X)
 		dd.t = dd.p.String()
+		log.Info("default expr", "type", n)
 	default:
 		dd.t = fmt.Sprintf("%s", n)
+		log.Info("default", "type", n)
 	}
+
 	return dd
 }

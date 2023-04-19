@@ -12,6 +12,6 @@ func (chanGen) ChanIn(a, b <-chan <-chan int) {
 }
 
 // ChanInDefault if you input chan <-chan the imports will optimize to chan<- chan...:)
-func (chanGen) ChanInDefault(a, b chan<- chan int) string {
+func (chanGen) ChanInDefault(a, b chan (<-chan int)) string {
 	return ""
 }

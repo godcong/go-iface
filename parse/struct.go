@@ -9,14 +9,15 @@ type Struct struct {
 	Name      string
 	Variables []*Argument
 	Methods   []*Method
-	//OverLoad  []*Method
 }
 
 func (s *Struct) parseFunc(n *ast.FuncDecl) {
 	m := Method{
-		Names: []string{n.Name.Name},
+		Names:      []string{n.Name.Name},
+		IsExported: n.Name.IsExported(),
 	}
 	m.Parse(n.Type)
+
 	s.Methods = append(s.Methods, &m)
 }
 
@@ -33,6 +34,8 @@ func (s *Struct) Parse(v ast.Node) {
 	case *ast.FuncDecl:
 		s.parseFunc(t)
 		s.parseDoc(t)
+	default:
+		log.Warn("struct parse not implemented", "type", t)
 	}
 }
 

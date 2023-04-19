@@ -18,22 +18,24 @@ import (
 
 // Generator is responsible for generating validation files for the given in a go source file.
 type Generator struct {
-	fileSet   *token.FileSet
-	tmpl      *template.Template
-	faces     map[string]*parse.Struct
-	targetPkg string
-	suffix    string
+	fileSet    *token.FileSet
+	tmpl       *template.Template
+	faces      map[string]*parse.Struct
+	targetPkg  string
+	suffix     string
+	exportOnly bool
 }
 
 // New is a constructor method for creating a new Generator with default
 // templates loaded.
 func New() *Generator {
 	return &Generator{
-		tmpl:      addEmbeddedTemplates(template.New("generator")),
-		fileSet:   token.NewFileSet(),
-		faces:     make(map[string]*parse.Struct),
-		targetPkg: "",
-		suffix:    "iface",
+		tmpl:       addEmbeddedTemplates(template.New("generator")),
+		fileSet:    token.NewFileSet(),
+		faces:      make(map[string]*parse.Struct),
+		targetPkg:  "",
+		suffix:     "iface",
+		exportOnly: true,
 	}
 }
 
@@ -83,7 +85,13 @@ func (g *Generator) Generate(f map[string]*ast.Package) (map[string][]byte, erro
 		}
 		var methods []string
 		for _, param := range m.Methods {
-			methods = append(methods, param.String())
+			if g.exportOnly {
+				if param.IsExported {
+					methods = append(methods, param.String())
+				}
+			} else {
+				methods = append(methods, param.String())
+			}
 		}
 		err = g.tmpl.ExecuteTemplate(vBuff, "iface", map[string]interface{}{
 			"name":    camelCase(m.Name),
@@ -96,7 +104,7 @@ func (g *Generator) Generate(f map[string]*ast.Package) (map[string][]byte, erro
 
 		formatted, err := format.Source(vBuff.Bytes())
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("format code error:%v", err)
 		}
 		ret[filename] = formatted
 
@@ -121,9 +129,11 @@ func (g *Generator) Visit(node ast.Node) ast.Visitor {
 		if i, ok := g.faces[s]; ok {
 			inter = i
 		}
-
+		log.Info("parse")
 		inter.Parse(n)
 		g.faces[s] = inter
+	default:
+		//do nothing
 	}
 	return g
 }

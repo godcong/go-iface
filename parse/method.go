@@ -6,10 +6,11 @@ import (
 )
 
 type Method struct {
-	Names []string
-	Type  Type
-	Args  []*Argument
-	Ret   []*Argument
+	Names      []string
+	IsExported bool
+	Type       Type
+	Args       []*Argument
+	Ret        []*Argument
 }
 
 func (m *Method) String() string {

@@ -9,6 +9,10 @@ func (baseGen) NoArgNoRet() {
 
 }
 
+func (baseGen) noArgNoRet() {
+
+}
+
 func (baseGen) IntArgRet(i int, j *int) int {
 	return 0
 }
