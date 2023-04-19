@@ -129,7 +129,7 @@ func (g *Generator) Visit(node ast.Node) ast.Visitor {
 		if i, ok := g.faces[s]; ok {
 			inter = i
 		}
-		log.Info("parse")
+		log.Debug("Struct Parse", "node", n)
 		inter.Parse(n)
 		g.faces[s] = inter
 	default:

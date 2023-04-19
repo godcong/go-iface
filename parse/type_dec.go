@@ -6,10 +6,6 @@ import (
 	"strings"
 )
 
-var fmtOutput = map[string]string{
-	"default": "%s",
-}
-
 type funcDec struct {
 	*ast.FuncType
 	m Method
@@ -20,6 +16,7 @@ func (f funcDec) Val() string {
 }
 
 func newFuncDec(v *ast.FuncType) *funcDec {
+	log.Debug("FuncType", "type", v)
 	fd := &funcDec{FuncType: v}
 	fd.m.Parse(v)
 	return fd
@@ -35,6 +32,7 @@ func (s structDec) Val() string {
 }
 
 func newStructDec(v *ast.StructType) *structDec {
+	log.Debug("StructType", "type", v)
 	sd := &structDec{StructType: v}
 	sd.s.Parse(v)
 	return sd
@@ -51,6 +49,7 @@ func (a arrayDec) Val() string {
 }
 
 func newArrayDec(v *ast.ArrayType) *arrayDec {
+	log.Debug("ArrayType", "type", v)
 	ad := &arrayDec{ArrayType: v}
 	switch l := v.Len.(type) {
 	case *ast.BasicLit:
@@ -82,6 +81,7 @@ func (i interfaceDec) Val() string {
 }
 
 func newInterfaceDec(v *ast.InterfaceType) *interfaceDec {
+	log.Debug("InterfaceType", "type", v)
 	it := &interfaceDec{InterfaceType: v}
 	if v.Methods != nil {
 		for _, method := range v.Methods.List {
@@ -112,6 +112,7 @@ func (m mapDec) Val() string {
 }
 
 func newMapDec(v *ast.MapType) *mapDec {
+	log.Debug("MapType", "type", v)
 	md := &mapDec{MapType: v}
 	md.Key = Parse(v.Key)
 	md.Value = Parse(v.Value)
@@ -135,7 +136,7 @@ func (c chanDec) Val() string {
 }
 
 func newChanDec(v *ast.ChanType) *chanDec {
-	log.Info("chan")
+	log.Debug("ChanType", "type", v)
 	cd := &chanDec{ChanType: v}
 	cd.Value = Parse(v.Value)
 	return cd
@@ -151,6 +152,7 @@ func (c ellipsisDec) Val() string {
 }
 
 func newEllipsisDec(v *ast.Ellipsis) *ellipsisDec {
+	log.Debug("Ellipsis", "type", v)
 	ed := &ellipsisDec{Ellipsis: v}
 	ed.Value = Parse(v.Elt)
 	return ed
@@ -186,17 +188,18 @@ func (d defaultDec) Val() string {
 }
 
 func newDefaultDec(node ast.Node) *defaultDec {
+
 	dd := &defaultDec{Node: node}
 
 	switch n := node.(type) {
 	case *ast.StarExpr:
+		log.Debug("StarExpr", "type", n)
 		dd.isStart = true
 		dd.p = Parse(n.X)
 		dd.t = dd.p.String()
-		log.Info("default expr", "type", n)
 	default:
+		log.Debug("Default", "type", n)
 		dd.t = fmt.Sprintf("%s", n)
-		log.Info("default", "type", n)
 	}
 
 	return dd
