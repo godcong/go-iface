@@ -48,5 +48,4 @@ func (m *Method) Parse(expr ast.Node) {
 			m.Ret = FuncArgs(ft.Results)
 		}
 	}
-
 }

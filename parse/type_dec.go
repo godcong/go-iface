@@ -3,6 +3,7 @@ package parse
 import (
 	"fmt"
 	"go/ast"
+	"reflect"
 	"strings"
 )
 
@@ -12,7 +13,7 @@ type decoder[T any] struct {
 }
 
 func newDecoder[T any](v T) *decoder[T] {
-	log.Debug("AnyType", "type", v)
+	log.Debug("AnyType", "type", reflect.TypeOf(v))
 	gd := &decoder[T]{s: v}
 	return gd
 }
@@ -70,7 +71,6 @@ func newArrayDec(v *ast.ArrayType) *arrayDec {
 	default:
 		ad.symbol = "[]"
 	}
-	//}
 	ad.t = Parse(v.Elt)
 	return ad
 }
