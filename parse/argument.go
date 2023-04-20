@@ -14,9 +14,9 @@ type Argument struct {
 // String returns the string representation of the argument.
 func (a Argument) String() string {
 	if len(a.Names) == 0 {
-		return a.Type.String()
+		return a.Type.Val()
 	}
-	return fmt.Sprintf("%s %s", CombineNames(a.Names), a.Type.String())
+	return fmt.Sprintf("%s %s", CombineNames(a.Names), a.Type.Val())
 }
 
 func argFromField(field *ast.Field) *Argument {

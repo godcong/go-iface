@@ -10,40 +10,38 @@ type Parser interface {
 }
 
 func Parse(node ast.Node) Type {
-	t := Type{
-		inType: "default",
-	}
+	var t Type
 
 	switch v := node.(type) {
 	case *ast.FuncType:
-		t.inType = "func"
-		t.p = newFuncDec(v)
+		t.typeStr = "FuncType"
+		t.parser = newFuncDec(v)
 	case *ast.StructType:
-		t.inType = "struct"
-		t.p = newStructDec(v)
+		t.typeStr = "StructType"
+		t.parser = newStructDec(v)
 	case *ast.ArrayType:
-		t.inType = "array"
-		t.p = newArrayDec(v)
+		t.typeStr = "ArrayType"
+		t.parser = newArrayDec(v)
 	case *ast.InterfaceType:
-		t.inType = "interface"
-		t.p = newInterfaceDec(v)
+		t.typeStr = "InterfaceType"
+		t.parser = newInterfaceDec(v)
 	case *ast.MapType:
-		t.inType = "map"
-		t.p = newMapDec(v)
+		t.typeStr = "MapType"
+		t.parser = newMapDec(v)
 	case *ast.ChanType:
-		t.inType = "chan"
-		t.p = newChanDec(v)
+		t.typeStr = "ChanType"
+		t.parser = newChanDec(v)
 	case *ast.ParenExpr:
-		t.inType = "paren"
-		t.p = newParenDec(v)
+		t.typeStr = "ParenExpr"
+		t.parser = newParenDec(v)
 	case *ast.Ellipsis:
-		t.inType = "ellipsis"
-		t.p = newEllipsisDec(v)
+		t.typeStr = "Ellipsis"
+		t.parser = newEllipsisDec(v)
 	default:
-		//default type case
-		t.p = newDefaultDec(node)
+		t.typeStr = "Default"
+		t.parser = newDefaultDec(node)
 	}
-	t.t = t.p.Val()
+	t.typeVal = t.parser.Val()
 	return t
 }
 

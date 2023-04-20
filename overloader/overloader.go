@@ -73,7 +73,7 @@ func (l *OverLoader) Generate(f map[string]*ast.Package) (map[string][]byte, err
 	//	}
 	//	var methods []string
 	//	for _, param := range m.Methods {
-	//		methods = append(methods, param.String())
+	//		methods = append(methods, param.Val())
 	//	}
 	//	err = l.tmpl.ExecuteTemplate(vBuff, "iface", map[string]interface{}{
 	//		"name":    camelCase(m.Name),

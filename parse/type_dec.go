@@ -6,6 +6,17 @@ import (
 	"strings"
 )
 
+type decoder[T any] struct {
+	s T
+	t Type
+}
+
+func newDecoder[T any](v T) *decoder[T] {
+	log.Debug("AnyType", "type", v)
+	gd := &decoder[T]{s: v}
+	return gd
+}
+
 type funcDec struct {
 	*ast.FuncType
 	m Method
@@ -45,7 +56,7 @@ type arrayDec struct {
 }
 
 func (a arrayDec) Val() string {
-	return a.symbol + a.t.String()
+	return a.symbol + a.t.Val()
 }
 
 func newArrayDec(v *ast.ArrayType) *arrayDec {
@@ -87,7 +98,7 @@ func newInterfaceDec(v *ast.InterfaceType) *interfaceDec {
 		for _, method := range v.Methods.List {
 			var m Method
 			t := Parse(method.Type)
-			if t.InType() != "default" {
+			if t.TypeStr() != "default" {
 				m.Parse(method.Type)
 				for i := range method.Names {
 					m.Names = append(m.Names, method.Names[i].String())
@@ -108,7 +119,7 @@ type mapDec struct {
 }
 
 func (m mapDec) Val() string {
-	return "map[" + m.Key.String() + "]" + m.Value.String()
+	return "map[" + m.Key.Val() + "]" + m.Value.Val()
 }
 
 func newMapDec(v *ast.MapType) *mapDec {
@@ -127,11 +138,11 @@ type chanDec struct {
 func (c chanDec) Val() string {
 	switch c.Dir {
 	case ast.RECV:
-		return "<-chan " + c.Value.String()
+		return "<-chan " + c.Value.Val()
 	case ast.SEND:
-		return "chan<- " + c.Value.String()
+		return "chan<- " + c.Value.Val()
 	default:
-		return "chan " + c.Value.String()
+		return "chan " + c.Value.Val()
 	}
 }
 
@@ -148,7 +159,7 @@ type ellipsisDec struct {
 }
 
 func (c ellipsisDec) Val() string {
-	return "..." + c.Value.String()
+	return "..." + c.Value.Val()
 }
 
 func newEllipsisDec(v *ast.Ellipsis) *ellipsisDec {
@@ -170,7 +181,7 @@ func newParenDec(v *ast.ParenExpr) *parenDec {
 }
 
 func (d parenDec) Val() string {
-	return "(" + d.Value.String() + ")"
+	return "(" + d.Value.Val() + ")"
 }
 
 type defaultDec struct {
@@ -196,7 +207,7 @@ func newDefaultDec(node ast.Node) *defaultDec {
 		log.Debug("StarExpr", "type", n)
 		dd.isStart = true
 		dd.p = Parse(n.X)
-		dd.t = dd.p.String()
+		dd.t = dd.p.Val()
 	default:
 		log.Debug("Default", "type", n)
 		dd.t = fmt.Sprintf("%s", n)

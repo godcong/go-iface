@@ -14,8 +14,8 @@ type Method struct {
 }
 
 func (m *Method) String() string {
-	if m.Type.InType() == "default" {
-		return m.Type.String()
+	if m.Type.TypeStr() == "default" {
+		return m.Type.Val()
 	}
 	if len(m.Names) == 0 {
 		return fmt.Sprintf("func(%s) %s", combineArgs(m.Args), m.retString())
@@ -29,9 +29,9 @@ func (m *Method) retString() string {
 		return ""
 	case 1:
 		if len(m.Ret[0].Names) == 0 {
-			return m.Ret[0].Type.String()
+			return m.Ret[0].Type.Val()
 		}
-		return fmt.Sprintf("(%s %s)", CombineNames(m.Ret[0].Names), m.Ret[0].Type.String())
+		return fmt.Sprintf("(%s %s)", CombineNames(m.Ret[0].Names), m.Ret[0].Type.Val())
 	default:
 		return "(" + combineArgs(m.Ret) + ")"
 	}
